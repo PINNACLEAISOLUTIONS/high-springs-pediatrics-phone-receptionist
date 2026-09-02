@@ -1,7 +1,8 @@
 const {
   handleCheckAvailability,
   handleBookAppointment,
-  handleRefillRequest
+  handleRefillRequest,
+  handleTakeGeneralMessage
 } = require('../services/toolsService');
 
 /**
@@ -29,6 +30,12 @@ function routeToolCall(functionName, args = {}) {
     case 'refillRequest':
     case 'request_medication_refill':
       return handleRefillRequest(args);
+
+    case 'take_general_message':
+    case 'takeGeneralMessage':
+    case 'send_message':
+    case 'log_message':
+      return handleTakeGeneralMessage(args);
 
     default:
       console.warn(`[Vapi Webhook] Unknown function requested: "${normalizedName}". Returning acknowledgment.`);

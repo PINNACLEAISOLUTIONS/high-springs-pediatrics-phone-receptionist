@@ -149,10 +149,61 @@ function handleRefillRequest(args = {}) {
   return result;
 }
 
+const messagesStore = [];
+
+/**
+ * 4. take_general_message
+ * Securely logs and routes general messages from callers to office staff
+ */
+function handleTakeGeneralMessage(args = {}) {
+  const callerName = args.callerName || args.name || args.fullName || 'Caller';
+  const phoneNumber = args.phoneNumber || args.phone || args.contactNumber || 'Not provided';
+  const reasonForCall = args.reasonForCall || args.reason || args.subject || 'General Inquiry';
+  const messageBody = args.messageBody || args.message || args.notes || 'No message content provided';
+
+  const messageId = `MSG-${Math.floor(10000 + Math.random() * 90000)}`;
+
+  const messageRecord = {
+    messageId,
+    callerName,
+    phoneNumber,
+    reasonForCall,
+    messageBody,
+    status: 'ROUTED_TO_OFFICE_STAFF',
+    receivedAt: new Date().toISOString()
+  };
+
+  messagesStore.unshift(messageRecord);
+
+  // High-visibility office staff dashboard console output
+  console.log('\n==============================================================');
+  console.log(`[HIGH SPRINGS PEDIATRICS] 📬 GENERAL OFFICE MESSAGE (${messageId})`);
+  console.log('==============================================================');
+  console.log(`Caller Name:      ${callerName}`);
+  console.log(`Phone Number:     ${phoneNumber}`);
+  console.log(`Reason for Call:  ${reasonForCall}`);
+  console.log(`Message Body:     ${messageBody}`);
+  console.log(`Status:           ROUTED TO OFFICE STAFF`);
+  console.log(`Received At:      ${new Date().toLocaleString()}`);
+  console.log('==============================================================\n');
+
+  const result = {
+    status: 'success',
+    messageId,
+    callerName,
+    reasonForCall,
+    message: `Message from ${callerName} regarding ${reasonForCall} has been securely logged and routed to the office staff.`
+  };
+
+  return result;
+}
+
 module.exports = {
   handleCheckAvailability,
   handleBookAppointment,
   handleRefillRequest,
+  handleTakeGeneralMessage,
   appointmentsStore,
-  refillRequestsStore
+  refillRequestsStore,
+  messagesStore
 };
