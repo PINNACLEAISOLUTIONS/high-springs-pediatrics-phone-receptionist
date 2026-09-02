@@ -3,6 +3,8 @@
  * Handles Vapi Tool Calls: check_availability, book_appointment, refill_request
  */
 
+const { createCalendarEvent } = require('./googleCalendarService');
+
 // In-memory stores for demonstration
 const appointmentsStore = [];
 const refillRequestsStore = [];
@@ -71,6 +73,11 @@ function handleBookAppointment(args = {}) {
   };
 
   appointmentsStore.unshift(bookingRecord);
+
+  // Trigger Google Calendar insertion asynchronously
+  createCalendarEvent(bookingRecord).catch(err => {
+    console.error('[Google Calendar Sync Warning]:', err.message);
+  });
 
   console.log('\n==============================================================');
   console.log(`[HIGH SPRINGS PEDIATRICS] 📅 APPOINTMENT BOOKED`);
