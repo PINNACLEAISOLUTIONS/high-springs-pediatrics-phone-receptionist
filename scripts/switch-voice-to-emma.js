@@ -91,9 +91,8 @@ async function switchVoiceToEmma() {
   const patchPayload = {
     name: "High Springs Pediatrics (Emma)",
     voice: {
-      provider: "11labs",
-      voiceId: "pFZP5JQG7iQjIQuC4Bku", // ElevenLabs Emma (Professional, warm, British/American natural)
-      model: "eleven_flash_v2"
+      provider: "vapi",
+      voiceId: "Emma"
     },
     model: {
       model: "gpt-4o-mini",
