@@ -115,8 +115,8 @@ async function runValidation() {
     const bookPassed = bookRes.status === 200 && bookRes.data.results && /Confirmation number: \d{3}/.test(bookRes.data.results[0].result);
     console.log(`Result: ${bookPassed ? '✅ PASSED' : '❌ FAILED'}`);
 
-    // 3. Test refill_request
-    console.log('\n--- 3. Testing refill_request ---');
+    // 3. Test submit_refill_request
+    console.log('\n--- 3. Testing submit_refill_request ---');
     const refillPayload = {
       message: {
         type: 'tool-calls',
@@ -125,15 +125,12 @@ async function runValidation() {
             id: 'call_refill_003',
             type: 'function',
             function: {
-              name: 'refill_request',
+              name: 'submit_refill_request',
               arguments: {
                 patientName: 'Liam Johnson',
                 dob: '2020-03-22',
-                medicationName: 'Albuterol Inhaler 90mcg',
-                dosage: '2 puffs every 4-6 hours as needed',
-                pharmacyName: 'CVS Pharmacy - High Springs Branch',
-                pharmacyPhone: '+1 (555) 887-2341',
-                phone: '+1 (555) 431-9021'
+                phone: '+1 (555) 431-9021',
+                medication: 'Insulin Glargine 100 units/mL'
               }
             }
           }
@@ -145,12 +142,13 @@ async function runValidation() {
     const refillRes = await postWebhook(refillPayload, PORT);
     console.log('HTTP Status:', refillRes.status);
     console.log('Response Body:', JSON.stringify(refillRes.data, null, 2));
-    const refillPassed = refillRes.status === 200 && refillRes.data.results && refillRes.data.results[0].result.includes('refill request');
+    const expectedRefillMsg = "Refill request for Insulin Glargine 100 units/mL successfully logged and sent to the clinical staff's dashboard.";
+    const refillPassed = refillRes.status === 200 && refillRes.data.results && refillRes.data.results[0].result === expectedRefillMsg;
     console.log(`Result: ${refillPassed ? '✅ PASSED' : '❌ FAILED'}`);
 
     if (checkPassed && bookPassed && refillPassed) {
       console.log('\n==============================================================');
-      console.log('🎉 ALL 3 HIGH SPRINGS PEDIATRICS TOOLS VALIDATED SUCCESSFULLY!');
+      console.log('🎉 ALL HIGH SPRINGS PEDIATRICS TOOLS VALIDATED SUCCESSFULLY!');
       console.log('==============================================================\n');
     } else {
       console.error('⚠️ One or more tool tests failed.');

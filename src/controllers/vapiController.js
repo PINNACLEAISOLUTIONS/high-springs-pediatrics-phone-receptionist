@@ -23,6 +23,8 @@ function routeToolCall(functionName, args = {}) {
     case 'create_booking':
       return handleBookAppointment(args);
 
+    case 'submit_refill_request':
+    case 'submitRefillRequest':
     case 'refill_request':
     case 'refillRequest':
     case 'request_medication_refill':

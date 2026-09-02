@@ -99,17 +99,16 @@ function handleBookAppointment(args = {}) {
 }
 
 /**
- * 3. refill_request
- * Logs patient medication refill request and routes to triage queue
+ * 3. submit_refill_request / refill_request
+ * Logs patient medication refill request and routes to triage dashboard
  */
 function handleRefillRequest(args = {}) {
   const patientName = args.patientName || args.childName || `${args.firstName || 'Patient'} ${args.lastName || ''}`.trim();
   const dob = args.dob || args.birthDate || 'Not specified';
-  const medicationName = args.medicationName || args.medication || args.drug || 'Prescription Medication';
-  const dosage = args.dosage || args.strength || 'As prescribed on file';
+  const phone = args.phone || args.parentPhone || args.contactNumber || 'Not provided';
+  const medication = args.medication || args.medicationName || args.drug || 'Prescription Medication';
+  const dosage = args.dosage || args.strength || 'Standard Prescription';
   const pharmacyName = args.pharmacyName || args.pharmacy || 'Preferred Pharmacy on file';
-  const pharmacyPhone = args.pharmacyPhone || 'On file';
-  const parentPhone = args.phone || args.parentPhone || 'Not provided';
 
   const refillId = `REF-${Math.floor(10000 + Math.random() * 90000)}`;
 
@@ -117,35 +116,34 @@ function handleRefillRequest(args = {}) {
     refillId,
     patientName,
     dob,
-    medicationName,
+    phone,
+    medication,
     dosage,
     pharmacyName,
-    pharmacyPhone,
-    parentPhone,
-    status: 'TRIAGE_QUEUE_PENDING',
+    status: 'TRIAGE_DASHBOARD_LOGGED',
     receivedAt: new Date().toISOString()
   };
 
   refillRequestsStore.unshift(refillRecord);
 
-  // High-visibility console log for clinical triage
+  // High-visibility clinical dashboard console output
   console.log('\n==============================================================');
-  console.log(`[HIGH SPRINGS PEDIATRICS] 💊 NEW MEDICATION REFILL REQUEST (${refillId})`);
+  console.log(`[HIGH SPRINGS PEDIATRICS] 💊 MEDICATION REFILL SUBMITTED (${refillId})`);
   console.log('==============================================================');
-  console.log(`Patient Name:     ${patientName} (DOB: ${dob})`);
-  console.log(`Medication:       ${medicationName} (${dosage})`);
-  console.log(`Pharmacy:         ${pharmacyName} (${pharmacyPhone})`);
-  console.log(`Parent Contact:   ${parentPhone}`);
-  console.log(`Status:           Forwarded to Pediatric Triage Queue`);
-  console.log(`Received At:      ${new Date().toLocaleString()}`);
+  console.log(`Patient Name:     ${patientName}`);
+  console.log(`Date of Birth:    ${dob}`);
+  console.log(`Contact Phone:    ${phone}`);
+  console.log(`Medication:       ${medication}`);
+  console.log(`Triage Status:    LOGGED TO CLINICAL STAFF DASHBOARD`);
+  console.log(`Timestamp:        ${new Date().toLocaleString()}`);
   console.log('==============================================================\n');
 
   const result = {
-    status: 'submitted',
+    status: 'success',
     refillId,
     patientName,
-    medicationName,
-    message: `Thank you. I have submitted the refill request for ${medicationName} for ${patientName}. Our nursing and pediatric triage team will review it and send it to ${pharmacyName} within 24 to 48 business hours.`
+    medication,
+    message: `Refill request for ${medication} successfully logged and sent to the clinical staff's dashboard.`
   };
 
   return result;
