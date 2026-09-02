@@ -16,15 +16,23 @@ const refillRequestsStore = [];
 function handleCheckAvailability(args = {}) {
   const dateInput = args.date || args.requestedTime || 'tomorrow';
   const visitType = args.appointmentType || args.visitType || args.reason || 'General Pediatric Consultation';
-  const provider = args.provider || args.doctor || 'Dr. Nasir Ahmed, M.D.';
+  
+  let provider = args.provider || args.doctor || args.physician || 'Dr. Nasir Ahmed, M.D.';
+  if (provider.toLowerCase().includes('ramin')) {
+    provider = 'Dr. Ramin Ahmed, M.D.';
+  } else if (provider.toLowerCase().includes('nasir')) {
+    provider = 'Dr. Nasir Ahmed, M.D.';
+  }
 
-  console.log(`[High Springs Pediatrics] Checking availability for ${visitType} on ${dateInput}...`);
+  console.log(`[High Springs Pediatrics] Checking availability with ${provider} for ${visitType} on ${dateInput}...`);
 
   // Mocked realistic pediatric clinic openings
   const mockSlots = [
     '9:30 AM',
+    '10:15 AM',
     '11:15 AM',
     '2:00 PM',
+    '2:45 PM',
     '3:45 PM'
   ];
 
@@ -37,7 +45,7 @@ function handleCheckAvailability(args = {}) {
     provider,
     visitType,
     availableSlots: mockSlots,
-    message: `We have several open slots for a ${visitType} on ${dateInput}: ${slotsList}. Which time works best for your child?`
+    message: `${provider} has open slots for a ${visitType} on ${dateInput}: ${slotsList}. Which time works best for the patient?`
   };
 
   return result;
@@ -56,6 +64,13 @@ function handleBookAppointment(args = {}) {
   const reason = args.reason || args.appointmentType || 'Routine Pediatric Visit';
   const dob = args.dob || args.birthDate || 'Not specified';
 
+  let provider = args.provider || args.doctor || args.physician || 'Dr. Nasir Ahmed, M.D.';
+  if (provider.toLowerCase().includes('ramin')) {
+    provider = 'Dr. Ramin Ahmed, M.D.';
+  } else if (provider.toLowerCase().includes('nasir')) {
+    provider = 'Dr. Nasir Ahmed, M.D.';
+  }
+
   // Generate random 3-digit confirmation number (100 - 999)
   const confirmationNumber = Math.floor(100 + Math.random() * 900);
 
@@ -65,6 +80,7 @@ function handleBookAppointment(args = {}) {
     parentName,
     phone,
     dob,
+    provider,
     date,
     timeSlot,
     reason,
@@ -84,6 +100,7 @@ function handleBookAppointment(args = {}) {
   console.log(`Confirmation Number: ${confirmationNumber}`);
   console.log('==============================================================');
   console.log(`Patient Name:     ${childName} (DOB: ${dob})`);
+  console.log(`Physician:        ${provider}`);
   console.log(`Parent Contact:   ${parentName} (${phone})`);
   console.log(`Scheduled Time:   ${date} at ${timeSlot}`);
   console.log(`Reason for Visit: ${reason}`);
@@ -92,7 +109,8 @@ function handleBookAppointment(args = {}) {
   const result = {
     status: 'confirmed',
     confirmationNumber: String(confirmationNumber),
-    message: `Appointment booked successfully. Confirmation number: ${confirmationNumber}`
+    provider,
+    message: `Appointment booked successfully with ${provider}. Confirmation number: ${confirmationNumber}`
   };
 
   return result;
