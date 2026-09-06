@@ -87,7 +87,6 @@ async function handleBookAppointment(args = {}) {
   }
 
   const confDigits = confirmationNumber.split('').join(' ');
-  const doctorShort = provider.includes('Ramin') ? 'Dr. Ramin' : 'Dr. Nasir';
   return {
     status: 'confirmed',
     confirmationNumber,
@@ -95,8 +94,8 @@ async function handleBookAppointment(args = {}) {
     patientName: childName,
     date,
     timeSlot,
-    // Full read-back for the assistant to speak verbatim (doctor by first name only).
-    message: `You're all set. I have ${childName} booked with ${doctorShort} on ${date} at ${timeSlot} for a ${reason}. Your confirmation number is ${confDigits}. Is there anything else I can help you with?`
+    // Spoken read-back: patient name + day/time + confirmation number only (no doctor name).
+    message: `You're all set — ${childName} on ${date} at ${timeSlot}. Your confirmation number is ${confDigits}. Is there anything else I can help you with?`
   };
 }
 
