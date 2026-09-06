@@ -8,7 +8,7 @@ const {
 /**
  * Dispatcher for High Springs Pediatrics function calls
  */
-function routeToolCall(functionName, args = {}) {
+async function routeToolCall(functionName, args = {}) {
   const normalizedName = (functionName || '').trim();
 
   switch (normalizedName) {
@@ -81,8 +81,14 @@ async function handleWebhook(req, res) {
 
         console.log(`[Tool Call] Executing "${functionName}" (ID: ${toolCallId})`);
 
-        // Execute tool logic
-        const toolExecutionResult = routeToolCall(functionName, args);
+        // Execute tool logic (graceful fallback so one failed tool doesn't kill the call)
+        let toolExecutionResult;
+        try {
+          toolExecutionResult = await routeToolCall(functionName, args);
+        } catch (toolErr) {
+          console.error(`[Tool Call Error] "${functionName}":`, toolErr.message);
+          toolExecutionResult = { status: 'error', message: `We hit a snag processing that request. A staff member will follow up.` };
+        }
 
         // Vapi expects result to be a string or JSON string
         const resultString = typeof toolExecutionResult === 'string'
@@ -109,7 +115,7 @@ async function handleWebhook(req, res) {
         : (fn.parameters || {});
 
       console.log(`[Legacy Function Call] Executing "${fnName}"`);
-      const resultData = routeToolCall(fnName, args);
+      const resultData = await routeToolCall(fnName, args);
       const resultString = typeof resultData === 'string'
         ? resultData
         : (resultData.message || JSON.stringify(resultData));

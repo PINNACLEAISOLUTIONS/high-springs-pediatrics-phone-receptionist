@@ -1,0 +1,57 @@
+// This is a placeholder for your Prisma schema.
+// You need to define the models for Appointments, RefillRequests, GeneralMessages, and CallLogs here.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Appointment {
+  id                 Int      @id @default(autoincrement())
+  confirmationNumber String
+  patientName        String
+  parentName         String
+  phone              String
+  dob                String
+  provider           String
+  date               String
+  timeSlot           String
+  reason             String
+  status             String
+  bookedAt           DateTime @default(now())
+}
+
+model RefillRequest {
+  id           Int      @id @default(autoincrement())
+  refillId     String
+  patientName  String
+  dob          String
+  phone        String
+  medication   String
+  dosage       String
+  pharmacyName String
+  status       String
+  receivedAt   DateTime @default(now())
+}
+
+model GeneralMessage {
+  id            Int      @id @default(autoincrement())
+  messageId     String
+  callerName    String
+  phoneNumber   String
+  reasonForCall String
+  messageBody   String
+  status        String
+  receivedAt    DateTime @default(now())
+}
+
+model CallLog {
+  id         Int      @id @default(autoincrement())
+  callId     String   @unique
+  status     String
+  receivedAt DateTime @default(now())
+}

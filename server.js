@@ -3,14 +3,12 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const authMiddleware = require('./src/middleware/authMiddleware');
 const config = require('./src/config/config');
 const vapiRoutes = require('./src/routes/vapiRoutes');
 const { getCallCenterData } = require('./src/services/vapiCallsService');
-const {
-  appointmentsStore,
-  refillRequestsStore,
-  messagesStore
-} = require('./src/services/toolsService');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const app = express();
 const server = http.createServer(app);
@@ -19,6 +17,9 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Apply Authentication Middleware globally for sensitive routes
+app.use(authMiddleware);
 
 // Request Logger
 app.use((req, res, next) => {
@@ -42,17 +43,35 @@ app.get('/api/calls', async (req, res) => {
   }
 });
 
-// 2. Clinical Data Endpoints
-app.get('/api/appointments', (req, res) => {
-  res.status(200).json({ appointments: appointmentsStore });
+// 2. Clinical Data Endpoints (persisted via Prisma)
+app.get('/api/appointments', async (req, res) => {
+  try {
+    const appointments = await prisma.appointment.findMany({ orderBy: { bookedAt: 'desc' } });
+    res.status(200).json({ appointments });
+  } catch (error) {
+    console.error('[Appointments API Error]:', error.message);
+    res.status(500).json({ error: 'Failed to read appointments', message: error.message });
+  }
 });
 
-app.get('/api/refills', (req, res) => {
-  res.status(200).json({ refills: refillRequestsStore });
+app.get('/api/refills', async (req, res) => {
+  try {
+    const refills = await prisma.refillRequest.findMany({ orderBy: { receivedAt: 'desc' } });
+    res.status(200).json({ refills });
+  } catch (error) {
+    console.error('[Refills API Error]:', error.message);
+    res.status(500).json({ error: 'Failed to read refills', message: error.message });
+  }
 });
 
-app.get('/api/messages', (req, res) => {
-  res.status(200).json({ messages: messagesStore });
+app.get('/api/messages', async (req, res) => {
+  try {
+    const messages = await prisma.generalMessage.findMany({ orderBy: { receivedAt: 'desc' } });
+    res.status(200).json({ messages });
+  } catch (error) {
+    console.error('[Messages API Error]:', error.message);
+    res.status(500).json({ error: 'Failed to read messages', message: error.message });
+  }
 });
 
 // Health Check Endpoint
@@ -61,7 +80,7 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     clinic: 'High Springs Pediatrics and Primary Care',
     physicians: ['Dr. Nasir Ahmed, M.D.', 'Dr. Ramin Ahmed, M.D.'],
-    voicePersona: 'Emma (Vapi Native American V2)',
+    voicePersona: 'Riley (Cartesia Sonic-2)',
     vapiAssistantId: config.vapiAssistantId,
     timestamp: new Date().toISOString()
   });
@@ -96,7 +115,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Clinical Portal Running:  http://localhost:${PORT}`);
   console.log(`📞 Live Call Center API:     http://localhost:${PORT}/api/calls`);
   console.log(`🔗 Vapi Webhook Endpoint:    http://localhost:${PORT}/api/vapi/webhook`);
-  console.log(`🤖 Voice AI Assistant:       Emma (Vapi Native American V2)`);
+  console.log(`🤖 Voice AI Assistant:       Riley (Cartesia Sonic-2)`);
   console.log('================================================================\n');
 });
 

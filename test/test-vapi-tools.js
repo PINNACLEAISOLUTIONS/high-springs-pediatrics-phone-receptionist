@@ -17,15 +17,20 @@ function createTestServer() {
 function postWebhook(payload, port = PORT) {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify(payload);
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(postData)
+    };
+    // Mirror how Vapi authenticates its webhook calls (see webhookAuth.js).
+    if (process.env.VAPI_WEBHOOK_SECRET) {
+      headers['x-vapi-secret'] = process.env.VAPI_WEBHOOK_SECRET;
+    }
     const options = {
       hostname: 'localhost',
       port,
       path: '/api/vapi/webhook',
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
-      }
+      headers
     };
 
     const req = http.request(options, (res) => {

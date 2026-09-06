@@ -1,20 +1,28 @@
 {
   "name": "high-springs-pediatrics-vapi",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node test/test-vapi-tools.js"
+    "test": "node test/test-vapi-tools.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Vapi.ai voice-receptionist webhook backend + clinical portal for High Springs Pediatrics & Primary Care",
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "googleapis": "^178.0.0"
+    "googleapis": "^178.0.0",
+    "twilio": "^6.1.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.3"
   }
 }

@@ -1,0 +1,47 @@
+// use prisma-next
+
+model Appointment {
+  id                 Int      @id @default(autoincrement())
+  confirmationNumber String
+  patientName        String
+  parentName         String
+  phone              String
+  dob                String
+  provider           String
+  date               String
+  timeSlot           String
+  reason             String
+  status             String
+  bookedAt           TimestamptzString @default(now())
+}
+
+model RefillRequest {
+  id           Int      @id @default(autoincrement())
+  refillId     String
+  patientName  String
+  dob          String
+  phone        String
+  medication   String
+  dosage       String
+  pharmacyName String
+  status       String
+  receivedAt   TimestamptzString @default(now())
+}
+
+model GeneralMessage {
+  id            Int      @id @default(autoincrement())
+  messageId     String
+  callerName    String
+  phoneNumber   String
+  reasonForCall String
+  messageBody   String
+  status        String
+  receivedAt    TimestamptzString @default(now())
+}
+
+model CallLog {
+  id         Int      @id @default(autoincrement())
+  callId     String   @unique
+  status     String
+  receivedAt TimestamptzString @default(now())
+}

@@ -1,315 +1,297 @@
 /**
- * HIGH SPRINGS PEDIATRICS & PRIMARY CARE
- * Clinical Receptionist Dashboard Frontend Engine
+ * High Springs Pediatrics & Primary Care
+ * Clinical Receptionist Dashboard — frontend
  */
 
 let allCalls = [];
 let currentTab = 'all';
 let currentSearch = '';
 
-// DOM Elements
-const callsList = document.getElementById('calls-list');
-const loadingState = document.getElementById('loading-state');
-const emptyState = document.getElementById('empty-state');
-const btnRefresh = document.getElementById('btn-refresh');
-const searchInput = document.getElementById('search-input');
-const searchClear = document.getElementById('search-clear');
-const tabButtons = document.querySelectorAll('.tab-btn');
+const $ = (id) => document.getElementById(id);
 
-// Stats Elements
-const statTotal = document.getElementById('stat-total-calls');
-const statAppointments = document.getElementById('stat-appointments');
-const statRefills = document.getElementById('stat-refills');
-const statMessages = document.getElementById('stat-messages');
-const statTransfers = document.getElementById('stat-transfers');
+const callsList     = $('calls-list');
+const loadingState  = $('loading-state');
+const emptyState    = $('empty-state');
+const errorState    = $('error-state');
+const errorDetail   = $('error-detail');
+const btnRefresh    = $('btn-refresh');
+const searchInput   = $('search-input');
+const searchClear   = $('search-clear');
+const tabButtons    = document.querySelectorAll('.tab-btn');
+const themeToggle   = $('theme-toggle');
 
-// Tab Counts
-const countAll = document.getElementById('tab-count-all');
-const countAppointments = document.getElementById('tab-count-appointments');
-const countRefills = document.getElementById('tab-count-refills');
-const countMessages = document.getElementById('tab-count-messages');
-const countTransfers = document.getElementById('tab-count-transfers');
+const stats = {
+  total:       $('stat-total-calls'),
+  appointments:$('stat-appointments'),
+  refills:     $('stat-refills'),
+  messages:    $('stat-messages'),
+  transfers:   $('stat-transfers'),
+  avgDuration: $('stat-avg-duration'),
+};
 
-// Modal Elements
-const callModal = document.getElementById('call-modal');
-const modalClose = document.getElementById('modal-close');
-const modalTitle = document.getElementById('modal-title');
-const modalBadge = document.getElementById('modal-category-badge');
-const modalCaller = document.getElementById('modal-caller');
-const modalTime = document.getElementById('modal-time');
-const modalDuration = document.getElementById('modal-duration');
-const modalAssistant = document.getElementById('modal-assistant');
-const modalActionBox = document.getElementById('modal-action-box');
-const modalTranscript = document.getElementById('modal-transcript');
-const modalAudioSection = document.getElementById('modal-audio-section');
-const modalAudioPlayer = document.getElementById('modal-audio-player');
+const counts = {
+  all:          $('tab-count-all'),
+  appointments: $('tab-count-appointments'),
+  refills:      $('tab-count-refills'),
+  messages:     $('tab-count-messages'),
+  transfers:    $('tab-count-transfers'),
+};
 
-/**
- * Fetch live call records from backend API
- */
+const modal = {
+  root:       $('call-modal'),
+  close:      $('modal-close'),
+  title:      $('modal-title'),
+  badge:      $('modal-category-badge'),
+  caller:     $('modal-caller'),
+  time:       $('modal-time'),
+  duration:   $('modal-duration'),
+  assistant:  $('modal-assistant'),
+  actionBox:  $('modal-action-box'),
+  transcript: $('modal-transcript'),
+  audioWrap:  $('modal-audio-section'),
+  audio:      $('modal-audio-player'),
+};
+
+/* ---------- Theme ---------- */
+(function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem('hsp-theme'); } catch (_) {}
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+})();
+
+themeToggle.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('hsp-theme', next); } catch (_) {}
+});
+
+/* ---------- Helpers ---------- */
+function escapeHtml(text) {
+  return (text || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function fmtDuration(seconds) {
+  const s = Math.max(0, Math.round(seconds || 0));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  return `${m}m ${s % 60}s`;
+}
+
+function fmtDateShort(iso) {
+  if (!iso) return 'Just now';
+  return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function show(el, visible) { el.hidden = !visible; }
+
+/* ---------- Data ---------- */
 async function loadCalls(isManual = false) {
+  if (isManual) btnRefresh.classList.add('spinning');
   try {
-    if (isManual) {
-      btnRefresh.classList.add('spinning');
+    const res = await fetch('/api/calls');
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || `HTTP ${res.status}`);
     }
-
-    const response = await fetch('/api/calls');
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Failed to fetch calls`);
-    }
-
-    const data = await response.json();
+    const data = await res.json();
     allCalls = Array.isArray(data.calls) ? data.calls : [];
-
-    // Update Statistics
+    show(errorState, false);
     updateStats(data.stats || {});
-
-    // Render Calls
     renderCalls();
-
-  } catch (error) {
-    console.error('Error loading calls:', error);
-  } finally {
-    loadingState.classList.add('hidden');
-    if (isManual) {
-      setTimeout(() => btnRefresh.classList.remove('spinning'), 500);
+  } catch (err) {
+    console.error('Error loading calls:', err);
+    if (allCalls.length === 0) {
+      show(errorState, true);
+      show(emptyState, false);
+      callsList.innerHTML = '';
+      errorDetail.innerHTML = `${escapeHtml(err.message)} — check that <code>VAPI_API_KEY</code> is set, then hit “Sync calls”.`;
     }
+  } finally {
+    show(loadingState, false);
+    if (isManual) setTimeout(() => btnRefresh.classList.remove('spinning'), 500);
   }
 }
 
-/**
- * Update top-level metric counters
- */
-function updateStats(stats) {
-  statTotal.textContent = stats.totalCalls ?? allCalls.length;
-  statAppointments.textContent = stats.appointmentsCount ?? allCalls.filter(c => c.category === 'Appointment Booking').length;
-  statRefills.textContent = stats.refillsCount ?? allCalls.filter(c => c.category === 'Medication Refill').length;
-  statMessages.textContent = stats.messagesCount ?? allCalls.filter(c => c.category === 'Office Message').length;
-  statTransfers.textContent = stats.transfersCount ?? allCalls.filter(c => c.wasTransferred).length;
+function countBy(pred) { return allCalls.filter(pred).length; }
+const isAppointment = (c) => c.category === 'Appointment Booking';
+const isRefill      = (c) => c.category === 'Medication Refill';
+const isMessage     = (c) => c.category === 'Office Message';
+const isTransfer    = (c) => c.wasTransferred;
 
-  countAll.textContent = allCalls.length;
-  countAppointments.textContent = allCalls.filter(c => c.category === 'Appointment Booking').length;
-  countRefills.textContent = allCalls.filter(c => c.category === 'Medication Refill').length;
-  countMessages.textContent = allCalls.filter(c => c.category === 'Office Message').length;
-  countTransfers.textContent = allCalls.filter(c => c.wasTransferred).length;
+function updateStats(s) {
+  stats.total.textContent        = s.totalCalls        ?? allCalls.length;
+  stats.appointments.textContent = s.appointmentsCount ?? countBy(isAppointment);
+  stats.refills.textContent      = s.refillsCount      ?? countBy(isRefill);
+  stats.messages.textContent     = s.messagesCount     ?? countBy(isMessage);
+  stats.transfers.textContent    = s.transfersCount    ?? countBy(isTransfer);
+  stats.avgDuration.textContent  = fmtDuration(s.avgDurationSeconds ?? 0);
+
+  counts.all.textContent          = allCalls.length;
+  counts.appointments.textContent = countBy(isAppointment);
+  counts.refills.textContent      = countBy(isRefill);
+  counts.messages.textContent     = countBy(isMessage);
+  counts.transfers.textContent    = countBy(isTransfer);
 }
 
-/**
- * Filter and render call list cards
- */
+/* ---------- Render ---------- */
+function matchesSearch(call, q) {
+  if (!q) return true;
+  const d = call.extractedData || {};
+  return [
+    call.callerNumber, call.transcript, call.category,
+    d.patientName, d.medication, d.physician, d.confirmationNumber,
+  ].some((v) => (v || '').toString().toLowerCase().includes(q));
+}
+
+function actionSnippet(call) {
+  const d = call.extractedData || {};
+  if (isAppointment(call)) return `📅 <strong>${escapeHtml(d.physician || 'Dr. Nasir Ahmed, M.D.')}</strong> &bull; Conf #${escapeHtml(d.confirmationNumber || 'logged')}`;
+  if (isRefill(call))      return `💊 Refill: <strong>${escapeHtml(d.medication || 'medication')}</strong> &bull; triage queue`;
+  if (isMessage(call))     return `📬 Message for clinic staff`;
+  if (isTransfer(call))    return `🔀 Transferred to office (+1 352-231-9154)`;
+  return `📞 General practice inquiry`;
+}
+
 function renderCalls() {
-  const query = currentSearch.trim().toLowerCase();
-
-  const filtered = allCalls.filter(call => {
-    // 1. Tab filtering
-    if (currentTab === 'appointments' && call.category !== 'Appointment Booking') return false;
-    if (currentTab === 'refills' && call.category !== 'Medication Refill') return false;
-    if (currentTab === 'messages' && call.category !== 'Office Message') return false;
-    if (currentTab === 'transfers' && !call.wasTransferred) return false;
-
-    // 2. Search query filtering
-    if (query) {
-      const matchCaller = (call.callerNumber || '').toLowerCase().includes(query);
-      const matchTranscript = (call.transcript || '').toLowerCase().includes(query);
-      const matchCategory = (call.category || '').toLowerCase().includes(query);
-      const matchPatient = call.extractedData && (call.extractedData.patientName || '').toLowerCase().includes(query);
-      const matchMed = call.extractedData && (call.extractedData.medication || '').toLowerCase().includes(query);
-      const matchDoc = call.extractedData && (call.extractedData.physician || '').toLowerCase().includes(query);
-      const matchConf = call.extractedData && (call.extractedData.confirmationNumber || '').toLowerCase().includes(query);
-
-      return matchCaller || matchTranscript || matchCategory || matchPatient || matchMed || matchDoc || matchConf;
-    }
-
-    return true;
+  const q = currentSearch.trim().toLowerCase();
+  const filtered = allCalls.filter((call) => {
+    if (currentTab === 'appointments' && !isAppointment(call)) return false;
+    if (currentTab === 'refills' && !isRefill(call)) return false;
+    if (currentTab === 'messages' && !isMessage(call)) return false;
+    if (currentTab === 'transfers' && !isTransfer(call)) return false;
+    return matchesSearch(call, q);
   });
 
   callsList.innerHTML = '';
 
   if (filtered.length === 0) {
-    emptyState.classList.remove('hidden');
+    show(emptyState, !errorState.hidden ? false : true);
     return;
   }
+  show(emptyState, false);
 
-  emptyState.classList.add('hidden');
-
-  filtered.forEach(call => {
-    const card = document.createElement('div');
+  const frag = document.createDocumentFragment();
+  filtered.forEach((call) => {
+    const snippet = (call.transcript || '').slice(0, 220);
+    const card = document.createElement('article');
     card.className = 'call-card';
     card.addEventListener('click', () => openModal(call));
-
-    const dateFormatted = call.startedAt ? new Date(call.startedAt).toLocaleString([], {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }) : 'Just now';
-
-    let actionSnippet = '';
-    if (call.category === 'Appointment Booking') {
-      const doc = call.extractedData.physician || 'Dr. Nasir Ahmed, M.D.';
-      const conf = call.extractedData.confirmationNumber;
-      actionSnippet = `📅 <strong>${doc}</strong> &bull; Conf: #${conf || 'Logged'}`;
-    } else if (call.category === 'Medication Refill') {
-      actionSnippet = `💊 Refill: <strong>${call.extractedData.medication || 'Medication'}</strong> &bull; Triage Queue`;
-    } else if (call.category === 'Office Message') {
-      actionSnippet = `📬 Message for Clinic Staff`;
-    } else if (call.wasTransferred) {
-      actionSnippet = `🔀 Transferred to Office (+1 352-231-9154)`;
-    } else {
-      actionSnippet = `📞 General Practice Inquiry`;
-    }
-
     card.innerHTML = `
       <div class="call-card-top">
         <div class="call-meta-left">
-          <span class="badge badge-${call.categoryColor}">${call.categoryIcon} ${call.category}</span>
-          <span class="call-caller">${call.callerNumber}</span>
-          <span class="call-time">${dateFormatted}</span>
+          <span class="badge badge-${call.categoryColor}">${call.categoryIcon} ${escapeHtml(call.category)}</span>
+          <span class="call-caller">${escapeHtml(call.callerNumber)}</span>
+          <span class="call-time">${fmtDateShort(call.startedAt)}</span>
         </div>
-        <div class="call-duration">${call.durationSeconds}s duration</div>
+        <span class="call-duration">${fmtDuration(call.durationSeconds)}</span>
       </div>
-      
-      <p class="call-snippet">"${escapeHtml(call.transcript.substring(0, 220))}${call.transcript.length > 220 ? '...' : ''}"</p>
-
+      <p class="call-snippet">${escapeHtml(snippet)}${(call.transcript || '').length > 220 ? '…' : ''}</p>
       <div class="call-card-bottom">
-        <span class="call-action-pill">${actionSnippet}</span>
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <span style="font-size: 12px; color: var(--text-muted);">Receptionist: <strong>${call.assistantName}</strong></span>
-          ${call.recordingUrl ? '<span class="call-has-audio">🎧 Audio Available</span>' : ''}
+        <span class="call-action-pill">${actionSnippet(call)}</span>
+        <div class="call-card-meta">
+          <span>Receptionist: <strong>${escapeHtml(call.assistantName || 'Riley')}</strong></span>
+          ${call.recordingUrl ? '<span class="call-has-audio">🎧 Audio</span>' : ''}
         </div>
-      </div>
-    `;
-
-    callsList.appendChild(card);
+      </div>`;
+    frag.appendChild(card);
   });
+  callsList.appendChild(frag);
 }
 
-/**
- * Open Call Details Modal with Audio & Transcript
- */
+/* ---------- Modal ---------- */
 function openModal(call) {
-  modalTitle.textContent = `Call from ${call.callerNumber}`;
-  modalBadge.className = `badge badge-${call.categoryColor}`;
-  modalBadge.textContent = `${call.categoryIcon} ${call.category}`;
+  const d = call.extractedData || {};
+  modal.title.textContent = `Call from ${call.callerNumber}`;
+  modal.badge.className = `badge badge-${call.categoryColor}`;
+  modal.badge.textContent = `${call.categoryIcon} ${call.category}`;
+  modal.caller.textContent = call.callerNumber;
+  modal.time.textContent = call.startedAt ? new Date(call.startedAt).toLocaleString() : 'N/A';
+  modal.duration.textContent = fmtDuration(call.durationSeconds);
+  modal.assistant.textContent = `${call.assistantName || 'Riley'} (Voice AI)`;
 
-  modalCaller.textContent = call.callerNumber;
-  modalTime.textContent = call.startedAt ? new Date(call.startedAt).toLocaleString() : 'N/A';
-  modalDuration.textContent = `${call.durationSeconds} seconds`;
-  modalAssistant.textContent = `${call.assistantName} (Voice AI)`;
-
-  // Action Box
-  if (call.category === 'Appointment Booking') {
-    modalActionBox.classList.remove('hidden');
-    modalActionBox.innerHTML = `
-      <strong>📅 Confirmed Appointment Details:</strong><br>
-      • Physician: <strong>${call.extractedData.physician || 'Dr. Nasir Ahmed, M.D.'}</strong><br>
-      • Patient: <strong>${call.extractedData.patientName || 'Michael Patella'}</strong><br>
-      • Confirmation Code: <span style="background: rgba(139,92,246,0.3); padding: 2px 6px; border-radius: 4px; font-weight: bold;">#${call.extractedData.confirmationNumber || '481'}</span><br>
-      • Scheduled Slot: ${call.extractedData.timeSlot || 'Confirmed Time'}
-    `;
-  } else if (call.category === 'Medication Refill') {
-    modalActionBox.classList.remove('hidden');
-    modalActionBox.innerHTML = `
-      <strong>💊 Prescription Refill Request:</strong><br>
-      • Medication: <strong>${call.extractedData.medication || 'Insulin'}</strong><br>
-      • Patient: <strong>${call.extractedData.patientName || 'Emma'}</strong><br>
-      • Routing: <strong>Logged for Clinical Nursing Triage</strong> (24-48h turnaround)
-    `;
-  } else if (call.wasTransferred) {
-    modalActionBox.classList.remove('hidden');
-    modalActionBox.innerHTML = `
-      <strong>🔀 Live Human Escalation:</strong><br>
-      • Caller requested live staff member / complex assistance.<br>
-      • Call was forwarded directly to office desk line: <strong>+1 (352) 231-9154</strong>
-    `;
+  if (isAppointment(call)) {
+    show(modal.actionBox, true);
+    modal.actionBox.innerHTML =
+      `<strong>📅 Appointment</strong><br>` +
+      `Physician: <strong>${escapeHtml(d.physician || 'Dr. Nasir Ahmed, M.D.')}</strong><br>` +
+      `Patient: <strong>${escapeHtml(d.patientName || '—')}</strong><br>` +
+      `Confirmation: <span class="chip">#${escapeHtml(d.confirmationNumber || '—')}</span><br>` +
+      `Slot: ${escapeHtml(d.timeSlot || 'confirmed time')}`;
+  } else if (isRefill(call)) {
+    show(modal.actionBox, true);
+    modal.actionBox.innerHTML =
+      `<strong>💊 Prescription refill</strong><br>` +
+      `Medication: <strong>${escapeHtml(d.medication || '—')}</strong><br>` +
+      `Patient: <strong>${escapeHtml(d.patientName || '—')}</strong><br>` +
+      `Routing: <strong>nursing triage</strong> (24–48h)`;
+  } else if (isTransfer(call)) {
+    show(modal.actionBox, true);
+    modal.actionBox.innerHTML =
+      `<strong>🔀 Live transfer</strong><br>` +
+      `Caller was forwarded to the office desk line: <strong>+1 (352) 231-9154</strong>`;
   } else {
-    modalActionBox.classList.add('hidden');
+    show(modal.actionBox, false);
   }
 
-  // Audio Player
   if (call.recordingUrl) {
-    modalAudioSection.classList.remove('hidden');
-    modalAudioPlayer.src = call.recordingUrl;
+    show(modal.audioWrap, true);
+    modal.audio.src = call.recordingUrl;
   } else {
-    modalAudioSection.classList.add('hidden');
-    modalAudioPlayer.pause();
-    modalAudioPlayer.src = '';
+    show(modal.audioWrap, false);
+    modal.audio.pause();
+    modal.audio.removeAttribute('src');
   }
 
-  // Transcript formatting
-  const formattedTranscript = formatTranscript(call.transcript);
-  modalTranscript.innerHTML = formattedTranscript;
-
-  callModal.classList.remove('hidden');
+  modal.transcript.innerHTML = formatTranscript(call.transcript);
+  show(modal.root, true);
 }
 
-/**
- * Close modal and pause audio
- */
 function closeModal() {
-  callModal.classList.add('hidden');
-  modalAudioPlayer.pause();
-  modalAudioPlayer.src = '';
+  show(modal.root, false);
+  modal.audio.pause();
+  modal.audio.removeAttribute('src');
 }
 
-/**
- * Format raw transcript text into dialogue lines
- */
 function formatTranscript(raw) {
   if (!raw) return '<em>No transcript recorded.</em>';
-
-  return raw
-    .replace(/(AI:|Assistant:)(.*?)(?=(User:|AI:|Assistant:|$))/gs, '<span class="transcript-line-ai">🤖 Emma:</span>$2<br><br>')
-    .replace(/(User:)(.*?)(?=(User:|AI:|Assistant:|$))/gs, '<span class="transcript-line-user">👤 Caller:</span>$2<br><br>');
+  return escapeHtml(raw)
+    .replace(/(AI:|Assistant:)/g, '<span class="transcript-line-ai">🤖 Riley:</span>')
+    .replace(/(User:|Customer:)/g, '<span class="transcript-line-user">👤 Caller:</span>');
 }
 
-function escapeHtml(text) {
-  return (text || '')
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-// Event Listeners
+/* ---------- Events ---------- */
 btnRefresh.addEventListener('click', () => loadCalls(true));
 
-tabButtons.forEach(btn => {
+tabButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
-    tabButtons.forEach(b => b.classList.remove('active'));
+    tabButtons.forEach((b) => b.classList.remove('active'));
     btn.classList.add('active');
-    currentTab = btn.getAttribute('data-tab');
+    currentTab = btn.dataset.tab;
     renderCalls();
   });
 });
 
 searchInput.addEventListener('input', (e) => {
   currentSearch = e.target.value;
-  if (currentSearch.length > 0) {
-    searchClear.classList.remove('hidden');
-  } else {
-    searchClear.classList.add('hidden');
-  }
+  show(searchClear, currentSearch.length > 0);
   renderCalls();
 });
 
 searchClear.addEventListener('click', () => {
   searchInput.value = '';
   currentSearch = '';
-  searchClear.classList.add('hidden');
+  show(searchClear, false);
   renderCalls();
+  searchInput.focus();
 });
 
-modalClose.addEventListener('click', closeModal);
-callModal.addEventListener('click', (e) => {
-  if (e.target === callModal) closeModal();
-});
+modal.close.addEventListener('click', closeModal);
+modal.root.addEventListener('click', (e) => { if (e.target === modal.root) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
-});
-
-// Initial Load & Auto Refresh every 15 seconds
+/* ---------- Boot ---------- */
 loadCalls(false);
 setInterval(() => loadCalls(false), 15000);

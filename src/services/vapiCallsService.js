@@ -52,11 +52,13 @@ function parseCallRecord(call) {
     durationSeconds = Math.round((new Date(endedAt) - new Date(startedAt)) / 1000);
   }
 
-  // Detect AI Voice / Persona
-  let assistantName = 'Emma';
-  if (transcript.includes('My name is Sarah') || transcript.includes('Sarah')) {
+  // Detect AI Voice / Persona from the greeting
+  let assistantName = 'Riley';
+  if (/\bmy name is Riley\b|\bthis is Riley\b/i.test(transcript)) {
+    assistantName = 'Riley';
+  } else if (/\bSarah\b/.test(transcript)) {
     assistantName = 'Sarah';
-  } else if (transcript.includes('My name is Emma') || transcript.includes('Emma')) {
+  } else if (/\bEmma\b/.test(transcript)) {
     assistantName = 'Emma';
   }
 

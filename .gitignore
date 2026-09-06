@@ -35,3 +35,19 @@ pids
 *.pid
 *.seed
 *.pid.lock
+dist/
+
+# Databases (Prisma dev DB, SQLite)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/dev.db
+prisma/migrations/dev.db
+
+# Credentials / service accounts (CRITICAL - NEVER COMMIT)
+service-account.json
+*-service-account.json
+gcp-*.json
+*.pem
+*.key

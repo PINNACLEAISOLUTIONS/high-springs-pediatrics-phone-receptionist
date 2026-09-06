@@ -1,188 +1,183 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>High Springs Pediatrics & Primary Care | Clinical Receptionist Portal</title>
+  <title>High Springs Pediatrics &amp; Primary Care | Clinical Receptionist Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- App Container -->
   <div class="app-shell">
-    
-    <!-- Sidebar / Topbar Header -->
+
     <header class="top-nav">
       <div class="nav-brand">
         <div class="brand-icon">🩺</div>
         <div class="brand-info">
-          <h1>High Springs Pediatrics & Primary Care</h1>
+          <h1>High Springs Pediatrics &amp; Primary Care</h1>
           <p class="brand-subtitle">Dr. Nasir Ahmed, M.D. &bull; Dr. Ramin Ahmed, M.D. &bull; 19228 NW US Hwy 441</p>
         </div>
       </div>
 
       <div class="nav-status-group">
-        <div class="assistant-badge">
+        <div class="assistant-badge" title="Active voice assistant">
           <span class="pulse-dot"></span>
-          <span class="assistant-label">Voice AI: <strong>Emma</strong> (American V2)</span>
+          <span class="assistant-label">Voice AI: <strong>Riley</strong></span>
         </div>
         <div class="phone-pills">
-          <span class="phone-pill" title="Live Inbound Line">📞 (904) 512-9821</span>
-          <span class="phone-pill" title="Secondary Line">📞 (213) 946-0802</span>
+          <span class="phone-pill" title="Live inbound line">📞 (904) 512-9821</span>
+          <span class="phone-pill" title="Secondary line">📞 (213) 946-0802</span>
         </div>
-        <button id="btn-refresh" class="btn-refresh" title="Pull latest calls from Vapi API">
-          <svg class="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button id="theme-toggle" class="btn-icon" title="Toggle light / dark" aria-label="Toggle theme">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+          </svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <button id="btn-refresh" class="btn-refresh" title="Pull latest calls from the Vapi API">
+          <svg class="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M23 4v6h-6M1 20v-6h6"></path>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
-          Sync Vapi Calls
+          <span>Sync calls</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="dashboard-main">
-      
-      <!-- Metrics Overview Ribbon -->
+
       <section class="metrics-grid">
-        <div class="metric-card card-total">
+        <div class="metric-card" data-accent="blue">
           <div class="metric-icon">📞</div>
           <div class="metric-body">
-            <span class="metric-label">Total Real Calls</span>
+            <span class="metric-label">Total calls</span>
             <span class="metric-value" id="stat-total-calls">--</span>
           </div>
         </div>
-
-        <div class="metric-card card-appointments">
+        <div class="metric-card" data-accent="purple">
           <div class="metric-icon">📅</div>
           <div class="metric-body">
-            <span class="metric-label">Booked Appointments</span>
+            <span class="metric-label">Appointments</span>
             <span class="metric-value" id="stat-appointments">--</span>
           </div>
         </div>
-
-        <div class="metric-card card-refills">
+        <div class="metric-card" data-accent="emerald">
           <div class="metric-icon">💊</div>
           <div class="metric-body">
-            <span class="metric-label">Prescription Refills</span>
+            <span class="metric-label">Refills</span>
             <span class="metric-value" id="stat-refills">--</span>
           </div>
         </div>
-
-        <div class="metric-card card-messages">
+        <div class="metric-card" data-accent="amber">
           <div class="metric-icon">📬</div>
           <div class="metric-body">
-            <span class="metric-label">Office Messages</span>
+            <span class="metric-label">Messages</span>
             <span class="metric-value" id="stat-messages">--</span>
           </div>
         </div>
-
-        <div class="metric-card card-transfers">
+        <div class="metric-card" data-accent="rose">
           <div class="metric-icon">🔀</div>
           <div class="metric-body">
-            <span class="metric-label">Staff Transfers</span>
+            <span class="metric-label">Transfers</span>
             <span class="metric-value" id="stat-transfers">--</span>
+          </div>
+        </div>
+        <div class="metric-card" data-accent="slate">
+          <div class="metric-icon">⏱️</div>
+          <div class="metric-body">
+            <span class="metric-label">Avg. duration</span>
+            <span class="metric-value" id="stat-avg-duration">--</span>
           </div>
         </div>
       </section>
 
-      <!-- Action & Search Bar -->
       <section class="controls-bar">
-        <!-- Interactive Tabs -->
         <nav class="nav-tabs" role="tablist">
-          <button class="tab-btn active" data-tab="all">
-            All Real Calls <span class="tab-badge" id="tab-count-all">0</span>
-          </button>
-          <button class="tab-btn" data-tab="appointments">
-            📅 Appointments <span class="tab-badge" id="tab-count-appointments">0</span>
-          </button>
-          <button class="tab-btn" data-tab="refills">
-            💊 Refill Queue <span class="tab-badge" id="tab-count-refills">0</span>
-          </button>
-          <button class="tab-btn" data-tab="messages">
-            📬 Messages <span class="tab-badge" id="tab-count-messages">0</span>
-          </button>
-          <button class="tab-btn" data-tab="transfers">
-            🔀 Transfers <span class="tab-badge" id="tab-count-transfers">0</span>
-          </button>
+          <button class="tab-btn active" data-tab="all">All calls <span class="tab-badge" id="tab-count-all">0</span></button>
+          <button class="tab-btn" data-tab="appointments">📅 Appointments <span class="tab-badge" id="tab-count-appointments">0</span></button>
+          <button class="tab-btn" data-tab="refills">💊 Refills <span class="tab-badge" id="tab-count-refills">0</span></button>
+          <button class="tab-btn" data-tab="messages">📬 Messages <span class="tab-badge" id="tab-count-messages">0</span></button>
+          <button class="tab-btn" data-tab="transfers">🔀 Transfers <span class="tab-badge" id="tab-count-transfers">0</span></button>
         </nav>
 
-        <!-- Search Input -->
         <div class="search-box">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" id="search-input" placeholder="Search by phone, patient name, doctor, or keyword...">
-          <button id="search-clear" class="search-clear hidden">&times;</button>
+          <input type="text" id="search-input" placeholder="Search by phone, patient, doctor, or keyword…">
+          <button id="search-clear" class="search-clear" hidden>&times;</button>
         </div>
       </section>
 
-      <!-- Calls Feed Container -->
       <section class="calls-container">
-        <div id="loading-state" class="empty-state">
-          <div class="spinner"></div>
-          <p>Fetching real phone calls from Vapi REST API...</p>
+        <div id="loading-state" class="skeleton-list">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
         </div>
 
-        <div id="empty-state" class="empty-state hidden">
+        <div id="error-state" class="empty-state" hidden>
+          <div class="empty-icon">⚠️</div>
+          <h3>Couldn't reach the Vapi call API</h3>
+          <p id="error-detail">Check that <code>VAPI_API_KEY</code> is set, then hit “Sync calls”.</p>
+        </div>
+
+        <div id="empty-state" class="empty-state" hidden>
           <div class="empty-icon">📭</div>
-          <h3>No Calls Found Matching Filter</h3>
-          <p>Try clearing your search query or placing a live test call to +1 (904) 512-9821.</p>
+          <h3>No calls match this view</h3>
+          <p>Clear the search or place a live test call to +1 (904) 512-9821.</p>
         </div>
 
-        <!-- Cards List -->
         <div id="calls-list" class="calls-list"></div>
       </section>
 
     </main>
 
-    <!-- Detailed Call Drawer / Modal -->
-    <div id="call-modal" class="modal-backdrop hidden">
-      <div class="modal-card">
+    <div id="call-modal" class="modal-backdrop" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
             <span id="modal-category-badge" class="badge">--</span>
-            <h2 id="modal-title">Call Details</h2>
+            <h2 id="modal-title">Call details</h2>
           </div>
-          <button id="modal-close" class="modal-close-btn">&times;</button>
+          <button id="modal-close" class="modal-close-btn" aria-label="Close">&times;</button>
         </div>
 
         <div class="modal-body">
-          <!-- Audio Player Block -->
-          <div id="modal-audio-section" class="audio-panel hidden">
-            <span class="audio-label">🎧 Official Call Audio Recording:</span>
-            <audio id="modal-audio-player" controls preload="metadata" style="width: 100%;"></audio>
+          <div id="modal-audio-section" class="audio-panel" hidden>
+            <span class="audio-label">🎧 Call recording</span>
+            <audio id="modal-audio-player" controls preload="metadata"></audio>
           </div>
 
-          <!-- Structured Info Grid -->
           <div class="info-grid">
             <div class="info-item">
-              <span class="info-label">Caller Phone:</span>
+              <span class="info-label">Caller</span>
               <span class="info-val" id="modal-caller">--</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Date & Time:</span>
+              <span class="info-label">Date &amp; time</span>
               <span class="info-val" id="modal-time">--</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Duration:</span>
+              <span class="info-label">Duration</span>
               <span class="info-val" id="modal-duration">--</span>
             </div>
             <div class="info-item">
-              <span class="info-label">AI Receptionist:</span>
+              <span class="info-label">AI receptionist</span>
               <span class="info-val" id="modal-assistant">--</span>
             </div>
           </div>
 
-          <!-- Extracted Action Banner -->
-          <div id="modal-action-box" class="action-banner hidden"></div>
+          <div id="modal-action-box" class="action-banner" hidden></div>
 
-          <!-- Full Transcript -->
           <div class="transcript-section">
-            <h3>Full Call Transcript</h3>
+            <h3>Full transcript</h3>
             <div id="modal-transcript" class="transcript-content"></div>
           </div>
         </div>
@@ -190,6 +185,8 @@
     </div>
 
   </div>
+
+  <footer class="app-footer">Engineered by <strong>Pinnacle AI Solutions</strong> · Voice AI Integrations</footer>
 
   <script src="/app.js"></script>
 </body>
