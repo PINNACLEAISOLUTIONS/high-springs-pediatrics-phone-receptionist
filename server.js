@@ -6,7 +6,7 @@ const cors = require('cors');
 const authMiddleware = require('./src/middleware/authMiddleware');
 const config = require('./src/config/config');
 const vapiRoutes = require('./src/routes/vapiRoutes');
-const { getCallCenterData } = require('./src/services/vapiCallsService');
+const { getCallCenterData, getSignedRecordingUrl } = require('./src/services/vapiCallsService');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -40,6 +40,21 @@ app.get('/api/calls', async (req, res) => {
   } catch (error) {
     console.error('[Calls API Error]:', error.message);
     res.status(500).json({ error: 'Failed to retrieve calls from Vapi', message: error.message });
+  }
+});
+
+// 1b. Recording proxy — Vapi's stored recordingUrl is an unsigned R2 URL (HTTP 400).
+// Resolve a fresh presigned URL per request and redirect the <audio> element to it.
+app.get('/api/recording', async (req, res) => {
+  const callId = req.query.callId;
+  if (!callId) return res.status(400).json({ error: 'callId query param required' });
+  try {
+    const url = await getSignedRecordingUrl(callId);
+    if (!url) return res.status(404).json({ error: 'No recording for this call' });
+    res.redirect(302, url);
+  } catch (error) {
+    console.error('[Recording API Error]:', error.message);
+    res.status(502).json({ error: 'Failed to resolve recording URL', message: error.message });
   }
 });
 

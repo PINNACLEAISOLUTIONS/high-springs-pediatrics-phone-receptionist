@@ -468,7 +468,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: grid;
+  display: none;               /* shown only via .is-open — never overlays the app when closed */
   place-items: center;
   padding: 20px;
   background: rgba(9, 14, 26, 0.55);
@@ -476,6 +476,7 @@ body {
   -webkit-backdrop-filter: blur(4px);
   animation: fade .15s ease;
 }
+.modal-backdrop.is-open { display: grid; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
 .modal-card {

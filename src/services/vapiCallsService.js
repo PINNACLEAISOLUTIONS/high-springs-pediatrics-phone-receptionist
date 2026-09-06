@@ -35,6 +35,37 @@ function fetchVapiCalls(limit = 25) {
   });
 }
 
+function fetchVapiCall(callId) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.vapi.ai',
+      path: `/call/${encodeURIComponent(callId)}`,
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' }
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => (data += chunk));
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+/**
+ * Resolves a fresh, playable (presigned) recording URL for a call.
+ * Vapi's stored `recordingUrl` points at raw R2 and returns HTTP 400 without
+ * signature query params; `artifact.presignedMonoUrl` is the browser-playable one.
+ */
+async function getSignedRecordingUrl(callId) {
+  const call = await fetchVapiCall(callId);
+  const art = (call && call.artifact) || {};
+  return art.presignedMonoUrl || art.presignedStereoUrl || art.presignedCustomerUrl || call.recordingUrl || null;
+}
+
 /**
  * Parses raw Vapi call into a structured clinical record
  */
@@ -137,6 +168,9 @@ function parseCallRecord(call) {
     extractedData.transferDestination = '+1 (352) 231-9154';
   }
 
+  const hasRecording = Boolean(call.recordingUrl || call.stereoRecordingUrl ||
+    (call.artifact && (call.artifact.recordingUrl || call.artifact.presignedMonoUrl)));
+
   return {
     id: call.id,
     callerNumber,
@@ -150,7 +184,8 @@ function parseCallRecord(call) {
     categoryColor,
     wasTransferred,
     extractedData,
-    recordingUrl: call.recordingUrl || call.stereoRecordingUrl || null,
+    // Proxy path — the backend resolves a fresh presigned URL on play (see /api/recording).
+    recordingUrl: hasRecording && call.id ? `/api/recording?callId=${encodeURIComponent(call.id)}` : null,
     transcript: transcript.trim() || 'No transcript available for this brief connection.',
     messagesCount: messages.length,
     cost: call.cost || 0
@@ -189,6 +224,8 @@ async function getCallCenterData() {
 
 module.exports = {
   fetchVapiCalls,
+  fetchVapiCall,
   parseCallRecord,
-  getCallCenterData
+  getCallCenterData,
+  getSignedRecordingUrl
 };

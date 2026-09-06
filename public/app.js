@@ -246,11 +246,13 @@ function openModal(call) {
   }
 
   modal.transcript.innerHTML = formatTranscript(call.transcript);
-  show(modal.root, true);
+  modal.root.hidden = false;
+  modal.root.classList.add('is-open');
 }
 
 function closeModal() {
-  show(modal.root, false);
+  modal.root.classList.remove('is-open');
+  modal.root.hidden = true;
   modal.audio.pause();
   modal.audio.removeAttribute('src');
 }
