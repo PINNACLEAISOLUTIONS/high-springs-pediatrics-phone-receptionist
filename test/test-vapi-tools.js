@@ -117,7 +117,11 @@ async function runValidation() {
     const bookRes = await postWebhook(bookPayload, PORT);
     console.log('HTTP Status:', bookRes.status);
     console.log('Response Body:', JSON.stringify(bookRes.data, null, 2));
-    const bookPassed = bookRes.status === 200 && bookRes.data.results && /Confirmation number: \d{3}/.test(bookRes.data.results[0].result);
+    const bookResult = bookRes.data.results && bookRes.data.results[0].result || '';
+    const bookPassed = bookRes.status === 200 &&
+      /confirmation number is(?:\s\d){3}/i.test(bookResult) &&
+      bookResult.includes('Emma Watson') &&
+      /11:15 AM/.test(bookResult);
     console.log(`Result: ${bookPassed ? '✅ PASSED' : '❌ FAILED'}`);
 
     // 3. Test submit_refill_request

@@ -57,7 +57,10 @@ async function handleBookAppointment(args = {}) {
   const timeSlot = args.timeSlot || args.time || '10:00 AM';
   const reason = args.reason || args.appointmentType || 'Routine Pediatric Visit';
   const dob = args.dob || args.birthDate || 'Not specified';
-  const provider = args.provider || 'Dr. Nasir Ahmed, M.D.';
+  const doctorPick = `${args.doctor || args.provider || args.physician || ''}`.toLowerCase();
+  const provider = doctorPick.includes('ramin')
+    ? 'Dr. Ramin Ahmed, M.D.'
+    : 'Dr. Nasir Ahmed, M.D.';
 
   const confirmationNumber = Math.floor(100 + Math.random() * 900).toString();
 
@@ -83,11 +86,16 @@ async function handleBookAppointment(args = {}) {
     sendSms(phone, `High Springs Pediatrics: Your appointment for ${childName} is confirmed for ${date} at ${timeSlot}. Conf: ${confirmationNumber}`);
   }
 
+  const confDigits = confirmationNumber.split('').join(' ');
   return {
     status: 'confirmed',
     confirmationNumber,
     provider,
-    message: `Appointment booked successfully with ${provider}. Confirmation number: ${confirmationNumber}`
+    patientName: childName,
+    date,
+    timeSlot,
+    // Full read-back for the assistant to speak verbatim.
+    message: `You're all set. I have ${childName} booked to see ${provider} on ${date} at ${timeSlot} for a ${reason}. Your confirmation number is ${confDigits}. Is there anything else I can help you with?`
   };
 }
 
